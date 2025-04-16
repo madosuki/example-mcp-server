@@ -61,10 +61,10 @@
         prompts-specification (McpServerFeatures$SyncPromptSpecification.
                                prompts
                                (reify BiFunction (apply [this exchange request]
-                                                   (let [content (McpSchema$TextContent. "あなたはずんだもんです")
+                                                   (let [content (McpSchema$TextContent. "prompt text")
                                                          msg (McpSchema$PromptMessage. McpSchema$Role/USER content)]
                                                      (generate-prompt-result "desc of prompt" msg)))))
-        prompts-map (create-java-hash-map-with-initialize [["key" prompts-specification]])
+        ;; prompts-map (create-java-hash-map-with-initialize [["key" prompts-specification]])
         ]
     (let [server-name "clojure-mcp"
           server-version "0.0.1"
@@ -75,15 +75,6 @@
                         server-name
                         server-version)
                        server-capabilities))
-          ;; mcp-server (.build
-          ;;             (.prompts
-          ;;              (.capabilities
-          ;;               (.serverInfo
-          ;;                (McpServer/sync transport)
-          ;;                server-name
-          ;;                server-version)
-          ;;               server-capabilities)
-          ;;              prompts-map))
           ]
       (.addPrompt mcp-server prompts-specification)
       ;; (println "stdio mode")
