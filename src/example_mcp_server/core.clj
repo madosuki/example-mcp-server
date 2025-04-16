@@ -1,4 +1,4 @@
-(ns my-mcp.core
+(ns example-mcp-server.core
   (:gen-class)
   (:import (java.util.function BiFunction)
            (io.modelcontextprotocol.server McpServer)

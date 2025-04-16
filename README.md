@@ -1,4 +1,4 @@
-# my-mcp
+# example-mcp-server
 
 A Clojure library designed to ... well, that part is up to you.
 

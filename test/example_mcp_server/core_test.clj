@@ -1,6 +1,6 @@
-(ns my-mcp.core-test
+(ns example-mcp-server.core-test
   (:require [clojure.test :refer :all]
-            [my-mcp.core :refer :all]))
+            [example-mcp-server.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
