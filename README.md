@@ -1,6 +1,6 @@
 # example-mcp-server
 
-Implemented only stdio server.
+Implemented only stdio server.  
 Using [https://github.com/modelcontextprotocol/java-sdk](https://github.com/modelcontextprotocol/java-sdk)
 
 ## Usage
