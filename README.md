@@ -1,10 +1,26 @@
 # example-mcp-server
 
-A Clojure library designed to ... well, that part is up to you.
+Implemented only stdio server.
 
 ## Usage
-
-FIXME
+```bash
+lein uberjar
+```
+then setting to Claude desktop config.
+like
+```json
+{
+  "mcpServers": {
+    "sampleClojureMcp": {
+            "command": "java",
+            "args": [
+                "-jar",
+                "your absolute path of jar"
+            ]
+    }
+  }
+}
+```
 
 ## License
 
