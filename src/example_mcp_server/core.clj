@@ -1,5 +1,6 @@
 (ns example-mcp-server.core
   (:gen-class)
+  (:require [clojure.tools.cli :refer [parse-opts]])
   (:import (java.util.function BiFunction)
            (io.modelcontextprotocol.server McpServer)
            (io.modelcontextprotocol.server McpServerFeatures)
@@ -45,13 +46,16 @@
     (.setHandler http-server servlet-context-handler)
     (.start http-server)))
 
+(def cli-options [["-s" "--sse" "run sse mode"
+                   :default false]
+                  ["-p" "--port PORT" "set port for sse mode"
+                   :default 8080
+                   :parse-fn #(Integer/parseInt %)]])
+
 (defn -main [& args]
-  (let [server-capabilities (.build (.prompts
+    (let [server-capabilities (.build (.prompts
                                      (McpSchema$ServerCapabilities/builder)
                                      true))
-        json-mapper (new ObjectMapper)        
-        transport-for-http (new HttpServletSseServerTransportProvider json-mapper "/mcp/message" "/mcp/sse")
-        transport (new StdioServerTransportProvider)
         ;; prompts (McpSchema$Prompt. "name"
         ;;                            "description"
         ;;                            (generate-prompt-arguments))
@@ -65,17 +69,29 @@
                                                          msg (McpSchema$PromptMessage. McpSchema$Role/USER content)]
                                                      (generate-prompt-result "desc of prompt" msg)))))
         ;; prompts-map (create-java-hash-map-with-initialize [["key" prompts-specification]])
-        ]
-    (let [server-name "clojure-mcp"
-          server-version "0.0.1"
-          mcp-server (.build
-                      (.capabilities
-                       (.serverInfo
-                        (McpServer/sync transport)
-                        server-name
-                        server-version)
-                       server-capabilities))
-          ]
-      (.addPrompt mcp-server prompts-specification)
-      ;; (println "stdio mode")
-      )))
+        {:keys [options _ _ _]} (parse-opts args cli-options)]
+      (if (:sse options)
+        (let [json-mapper (new ObjectMapper)        
+              transport-for-http (new HttpServletSseServerTransportProvider json-mapper "/mcp/message" "/mcp/sse")
+              server-name "clojure-mcp"
+              server-version "0.0.1"
+              mcp-server (.build
+                          (.capabilities
+                           (.serverInfo
+                            (McpServer/sync transport-for-http)
+                            server-name
+                            server-version)
+                           server-capabilities))]
+          (.addPrompt mcp-server prompts-specification)
+          (run-http-server transport-for-http (:port options)))
+        (let [transport (new StdioServerTransportProvider)
+              server-name "clojure-mcp"
+              server-version "0.0.1"
+              mcp-server (.build
+                          (.capabilities
+                           (.serverInfo
+                            (McpServer/sync transport)
+                            server-name
+                            server-version)
+                           server-capabilities))]
+          (.addPrompt mcp-server prompts-specification)))))

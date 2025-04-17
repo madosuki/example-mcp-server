@@ -5,6 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :repositories [["sonatype" {:url "https://oss.sonatype.org/content/repositories/releases" :update :always}]]
   :dependencies [[org.clojure/clojure "1.11.1"]
+                 [org.clojure/tools.cli "1.1.230"]
                  [io.modelcontextprotocol.sdk/mcp "0.9.0"]
                  [jakarta.servlet/jakarta.servlet-api "6.1.0"]
                  [org.eclipse.jetty/jetty-server "12.0.19"]
