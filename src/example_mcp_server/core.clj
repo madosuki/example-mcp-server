@@ -46,6 +46,27 @@
     (.setHandler http-server servlet-context-handler)
     (.start http-server)))
 
+(defn make-capabilities [& {:keys [^Boolean is-enable-tools
+                                   ^Boolean is-enable-prompts
+                                   ^Boolean is-resources-subscribe
+                                   ^Boolean is-enable-resources
+                                   ^Boolean is-enable-logging
+                                   ^Boolean is-enable-completions]}]
+  (let [tmp-builder
+        (.prompts
+         (.tools
+          (.resources
+           (McpSchema$ServerCapabilities/builder)
+           is-resources-subscribe is-enable-resources)
+          is-enable-tools)
+         is-enable-prompts)]
+    (.build
+     (cond (and is-enable-logging is-enable-completions) (.logging (.completions tmp-builder))
+           (and is-enable-logging (not is-enable-completions)) (.logging tmp-builder)
+           (and (not is-enable-logging) is-enable-completions) (.completions tmp-builder)
+           :else tmp-builder))))
+
+
 (def cli-options [["-s" "--sse" "run sse mode"
                    :default false]
                   ["-p" "--port PORT" "set port for sse mode"
@@ -53,9 +74,7 @@
                    :parse-fn #(Integer/parseInt %)]])
 
 (defn -main [& args]
-    (let [server-capabilities (.build (.prompts
-                                     (McpSchema$ServerCapabilities/builder)
-                                     true))
+    (let [server-capabilities (make-capabilities :is-enable-prompts true)
         ;; prompts (McpSchema$Prompt. "name"
         ;;                            "description"
         ;;                            (generate-prompt-arguments))
