@@ -6,10 +6,11 @@
   :repositories [["sonatype" {:url "https://oss.sonatype.org/content/repositories/releases" :update :always}]]
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/tools.cli "1.1.230"]
-                 [io.modelcontextprotocol.sdk/mcp "0.9.0"]
+                 [io.modelcontextprotocol.sdk/mcp "0.10.0"]
                  [jakarta.servlet/jakarta.servlet-api "6.1.0"]
                  [org.eclipse.jetty/jetty-server "12.0.19"]
-                 [org.eclipse.jetty.ee10/jetty-ee10-servlet "12.0.19"]]
+                 [org.eclipse.jetty.ee10/jetty-ee10-servlet "12.0.19"]
+                 [io.projectreactor/reactor-core "3.7.6"]]
   :repl-options {:init-ns example-mcp-server.core}
   :profiles {:uberjar {:aot :all}}
   :aot [example-mcp-server.core]

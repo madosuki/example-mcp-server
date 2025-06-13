@@ -4,8 +4,11 @@
   (:import (java.util.function BiFunction)
            (io.modelcontextprotocol.server McpServer)
            (io.modelcontextprotocol.server McpServerFeatures)
+           (io.modelcontextprotocol.server McpServerFeatures$SyncToolSpecification)
            (io.modelcontextprotocol.server McpServerFeatures$SyncPromptSpecification)
            (io.modelcontextprotocol.spec McpSchema)
+           (io.modelcontextprotocol.spec McpSchema$Tool)
+           (io.modelcontextprotocol.spec McpSchema$CallToolResult)
            (io.modelcontextprotocol.spec McpSchema$Prompt)
            (io.modelcontextprotocol.spec McpSchema$GetPromptResult)
            (io.modelcontextprotocol.spec McpSchema$PromptArgument)
@@ -18,7 +21,8 @@
            (com.fasterxml.jackson.databind ObjectMapper)
            (org.eclipse.jetty.ee10.servlet ServletContextHandler)
            (org.eclipse.jetty.ee10.servlet ServletHolder)
-           (org.eclipse.jetty.server Server)))
+           (org.eclipse.jetty.server Server)
+           (reactor.core.publisher Mono)))
 
 (defn create-java-hash-map-with-initialize [l]
   (let [r (new java.util.HashMap)]
@@ -74,7 +78,26 @@
                    :parse-fn #(Integer/parseInt %)]])
 
 (defn -main [& args]
-    (let [server-capabilities (make-capabilities :is-enable-prompts true)
+  (let [server-capabilities (make-capabilities :is-enable-prompts true :is-enable-tools true)
+        tool (McpSchema$Tool. "add_numbers"
+                              "calculate add numbers"
+                              "{
+\"type\": \"object\",
+\"properties\": {
+\"a\": {
+\"type\": \"number\"
+},
+\"b\": {
+\"type\": \"number\"
+}
+}
+}")
+        tool-specification (McpServerFeatures$SyncToolSpecification.
+                            tool
+                            (reify BiFunction (apply [this exchange arguments]
+                                                (let [a (.get arguments "a")
+                                                      b (.get arguments "b")]
+                                                  (McpSchema$CallToolResult. (str (+ a b)) false)))))
         ;; prompts (McpSchema$Prompt. "name"
         ;;                            "description"
         ;;                            (generate-prompt-arguments))
@@ -89,28 +112,29 @@
                                                      (generate-prompt-result "desc of prompt" msg)))))
         ;; prompts-map (create-java-hash-map-with-initialize [["key" prompts-specification]])
         {:keys [options _ _ _]} (parse-opts args cli-options)]
-      (if (:sse options)
-        (let [json-mapper (new ObjectMapper)        
-              transport-for-http (new HttpServletSseServerTransportProvider json-mapper "/mcp/message" "/mcp/sse")
-              server-name "clojure-mcp"
-              server-version "0.0.1"
-              mcp-server (.build
-                          (.capabilities
-                           (.serverInfo
-                            (McpServer/sync transport-for-http)
-                            server-name
-                            server-version)
-                           server-capabilities))]
-          (.addPrompt mcp-server prompts-specification)
-          (run-http-server transport-for-http (:port options)))
-        (let [transport (new StdioServerTransportProvider)
-              server-name "clojure-mcp"
-              server-version "0.0.1"
-              mcp-server (.build
-                          (.capabilities
-                           (.serverInfo
-                            (McpServer/sync transport)
-                            server-name
-                            server-version)
-                           server-capabilities))]
-          (.addPrompt mcp-server prompts-specification)))))
+    (if (:sse options)
+      (let [json-mapper (new ObjectMapper)
+            transport-for-http (new HttpServletSseServerTransportProvider json-mapper "/mcp/message" "/mcp/sse")
+            server-name "clojure-mcp"
+            server-version "0.0.1"
+            mcp-server (.build
+                        (.capabilities
+                         (.serverInfo
+                          (McpServer/sync transport-for-http)
+                          server-name
+                          server-version)
+                         server-capabilities))]
+        (.addPrompt mcp-server prompts-specification)
+        (run-http-server transport-for-http (:port options)))
+      (let [transport (new StdioServerTransportProvider)
+            server-name "clojure-mcp"
+            server-version "0.0.1"
+            mcp-server (.build
+                        (.capabilities
+                         (.serverInfo
+                          (McpServer/sync transport)
+                          server-name
+                          server-version)
+                         server-capabilities))]
+        (.addPrompt mcp-server prompts-specification)
+        (.addTool mcp-server tool-specification)))))
